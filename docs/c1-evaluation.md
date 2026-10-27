@@ -9,7 +9,7 @@
 
 C1 proposes **candidate English effect claims** — it does not judge truth. This run reuses the production `parse_text()` + `extract_candidate_claims()` against two fixture sets:
 
-- **Real documents:** 22 public `SKILL.md` files downloaded at pinned commits from 2 permissively-licensed repos (see `tests/fixtures/c1_eval/manifest.json`).
+- **Real documents:** 17 redistributable public `SKILL.md` files (13 Apache-2.0 from `anthropics/skills`, 4 MIT from `obra/superpowers`) downloaded at pinned commits (see `tests/fixtures/c1_eval/manifest.json`). An earlier, larger collection of 22 files was trimmed after a per-directory license audit; see §2 and `manifest.json` → `excluded`.
 - **Synthetic fixture:** 1 hand-written Markdown file (`tests/fixtures/c1_eval/synthetic/synthetic_claims.md`) covering the required phenomena.
 
 Downloaded docs were treated as untrusted data: no commands executed, no URLs followed, no packages installed.
@@ -132,7 +132,7 @@ These numbers describe the synthetic fixture only and must not be read as real-w
 
 ## 6. Known limitations
 
-- 22 real docs from 2 repos, both from the same general ecosystem (Anthropic skill authoring + Jesse Vincent's superpowers). This corpus is heavy on procedural guidance and light on marketing-style quantified claims; real-world false-positive rate on product-marketing SKILL.md files is not measured.
+- 17 redistributable real docs from 2 repos (13 Apache-2.0, 4 MIT). An earlier 22-doc collection included 5 Anthropic files that were later removed because their per-directory LICENSE.txt forbids redistribution; those 5 are historical-only and are not part of the shipped fixture. This corpus is heavy on procedural guidance and light on marketing-style quantified claims; real-world false-positive rate on product-marketing SKILL.md files is not measured.
 - **Real-set precision and recall are not computed.** With 0 hand-annotated in-scope-positive spans and 0 C1 flags, denominators are zero; "0 false positives observed" is reported as an observation, not as a precision estimate.
 - No network-dependent claims were reachable in this sample; URL association is not exercised by this eval (it belongs to E1, not C1).
 - Ambiguous cases (D) were not needed: every numeric span and every qualitative candidate in the sample resolved cleanly to A, B, or C on manual review.

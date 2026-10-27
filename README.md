@@ -12,11 +12,21 @@ references inside the same Markdown context** (same paragraph or same list item)
 
 Requires Python 3.11 or newer.
 
+The package has not yet been published to PyPI. Install from source:
+
 ```bash
-pip install skill-evidence-lint
+git clone https://github.com/xiaohei52056/skill-evidence-lint.git
+cd skill-evidence-lint
+python -m pip install .
 ```
 
-(For development, `pip install -e ".[dev]"` installs pytest and ruff as well.)
+(For development, `python -m pip install -e ".[dev]"` installs pytest and ruff as well.)
+
+Once a release is published to PyPI, the install command will simply be:
+
+```bash
+pip install skill-evidence-lint   # not yet available
+```
 
 ## Usage
 

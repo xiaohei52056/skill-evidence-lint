@@ -24,6 +24,10 @@ dev = [
 [project.scripts]
 skill-evidence-lint = "skill_evidence_lint.cli:app"
 
+[project.urls]
+Repository = "https://github.com/xiaohei52056/skill-evidence-lint"
+Issues = "https://github.com/xiaohei52056/skill-evidence-lint/issues"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
