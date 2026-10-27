@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ruff
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local eval artifacts (regenerate with scripts/run_c1_eval.py)
+tests/fixtures/c1_eval/c1_run.json
+
+# Common credential / secret files (defensive; never commit these)
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+!*.sample

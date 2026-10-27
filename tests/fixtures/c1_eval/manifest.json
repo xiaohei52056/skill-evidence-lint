@@ -1,0 +1,100 @@
+{
+  "collection_date": "2026-10-27",
+  "collector_note": "Network access was used ONLY to download these public files. They are treated as untrusted data: none of their commands were executed, none of their URLs were followed, no package was installed.",
+  "repos": [
+    {
+      "repo": "anthropics/skills",
+      "commit_sha": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "branch": "main",
+      "license": "Apache-2.0",
+      "license_source": "Each kept skill directory contains LICENSE.txt (standard Apache-2.0 text, blob sha 4f881c52d1f72f4cfb720e339e2d35c3058d01a9). A verbatim copy is saved as LICENSE_anthropics_skills.txt.",
+      "raw_url_template": "https://raw.githubusercontent.com/anthropics/skills/dbd4588f9e1033efb41dad4bef2f7947c8993d44/<path>",
+      "files": [
+        "skills/academy-guide/SKILL.md",
+        "skills/algorithmic-art/SKILL.md",
+        "skills/brand-guidelines/SKILL.md",
+        "skills/canvas-design/SKILL.md",
+        "skills/discernment-nudge/SKILL.md",
+        "skills/frontend-design/SKILL.md",
+        "skills/internal-comms/SKILL.md",
+        "skills/mcp-builder/SKILL.md",
+        "skills/skill-creator/SKILL.md",
+        "skills/slack-gif-creator/SKILL.md",
+        "skills/theme-factory/SKILL.md",
+        "skills/webapp-testing/SKILL.md",
+        "skills/web-artifacts-builder/SKILL.md"
+      ],
+      "local_prefix": "anthropics__skills__"
+    },
+    {
+      "repo": "obra/superpowers",
+      "commit_sha": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
+      "branch": "main",
+      "license": "MIT",
+      "license_source": "root LICENSE (Copyright (c) 2025 Jesse Vincent), verbatim copy saved as LICENSE_obra_superpowers.txt",
+      "raw_url_template": "https://raw.githubusercontent.com/obra/superpowers/2ce8aa15d05bd57213e6f746f953aafb7ded7a8b/<path>",
+      "files": [
+        "skills/brainstorming/SKILL.md",
+        "skills/systematic-debugging/SKILL.md",
+        "skills/test-driven-development/SKILL.md",
+        "skills/writing-plans/SKILL.md"
+      ],
+      "local_prefix": "obra__superpowers__"
+    }
+  ],
+  "excluded": [
+    {
+      "repo": "anthropics/skills",
+      "path": "skills/claude-api/SKILL.md",
+      "reason": "~105 KB reference document; not downloaded to keep the eval fixture small. Can be added later."
+    },
+    {
+      "repo": "anthropics/skills",
+      "path": "skills/docx/SKILL.md",
+      "license_of_record": "proprietary: '© 2025 Anthropic, PBC. All rights reserved.' with additional restrictions prohibiting extraction, reproduction, derivative works, and distribution to third parties.",
+      "reason": "Removed from redistributable fixtures. The LICENSE.txt for this skill explicitly forbids copying or distributing the materials outside Anthropic's Services. Local copy was deleted; it may still be referenced for offline evaluation but must not be committed to this repo."
+    },
+    {
+      "repo": "anthropics/skills",
+      "path": "skills/pdf/SKILL.md",
+      "license_of_record": "proprietary: '© 2025 Anthropic, PBC. All rights reserved.' (same additional restrictions as docx).",
+      "reason": "Removed from redistributable fixtures. Same proprietary restriction as docx."
+    },
+    {
+      "repo": "anthropics/skills",
+      "path": "skills/pptx/SKILL.md",
+      "license_of_record": "proprietary: '© 2025 Anthropic, PBC. All rights reserved.' (same additional restrictions as docx).",
+      "reason": "Removed from redistributable fixtures. Same proprietary restriction as docx."
+    },
+    {
+      "repo": "anthropics/skills",
+      "path": "skills/xlsx/SKILL.md",
+      "license_of_record": "proprietary: '© 2025 Anthropic, PBC. All rights reserved.' (same additional restrictions as docx).",
+      "reason": "Removed from redistributable fixtures. Same proprietary restriction as docx."
+    },
+    {
+      "repo": "anthropics/skills",
+      "path": "skills/doc-coauthoring/SKILL.md",
+      "license_of_record": "no LICENSE.txt present in skills/doc-coauthoring/ at this commit (directory contains only SKILL.md).",
+      "reason": "Removed from redistributable fixtures. Without an explicit license, default copyright (all rights reserved) applies; we cannot assume redistribution rights."
+    }
+  ],
+  "limitations": [
+    "GitHub unauthenticated API rate-limited enumeration of additional public skill collections; only 2 repos were reachable. Target was >=5 repos; repo diversity is below target and reported as such.",
+    "No private repos, no tokens, no full clones were used.",
+    "Five Anthropic skills were removed after per-directory license audit (4 proprietary all-rights-reserved, 1 with no license). Earlier Phase 7B counts of 18 Anthropic files are superseded; redistributable fixture count is now 13 Apache-2.0 files from anthropics/skills."
+  ],
+  "notice_audit": {
+    "anthropics/skills": {
+      "notice_file_checked": "THIRD_PARTY_NOTICES.md at commit dbd4588f9e1033efb41dad4bef2f7947c8993d44 (root of repo)",
+      "notice_local_copy": "real/THIRD_PARTY_NOTICES__anthropics_skills.txt",
+      "notice_covers": [
+        "imageio 2.37.0 / imageio-ffmpeg 0.6.0 (BSD-2-Clause)",
+        "FFmpeg 7.0.2 (GPLv3)",
+        "Pillow 11.3.0 (HPND/MIT-CMU)",
+        "~30 font files under SIL Open Font License 1.1 (e.g. canvas-design/canvas-fonts/*.ttf)"
+      ],
+      "conclusion": "We redistributed only the plain-text SKILL.md prose files (Apache-2.0). We did NOT copy imageio, imageio-ffmpeg, FFmpeg binaries, Pillow, or any font/.ttf/.otf files. The THIRD_PARTY_NOTICES items therefore do not apply to our copies; the per-directory LICENSE.txt (Apache-2.0) is the governing license for the Markdown text we kept. A verbatim copy of the upstream NOTICE is retained for transparency and future audit."
+    }
+  }
+}
