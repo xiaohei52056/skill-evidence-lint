@@ -106,3 +106,26 @@ def test_e2_still_reports_missing_exact_path(tmp_path):
     result = run_check(str(skill))
     assert any(f.rule_id is RuleID.E2 for f in result.findings)
     assert not any(f.rule_id is RuleID.E7 for f in result.findings)
+
+
+def test_question_mark_is_not_a_wildcard(tmp_path):
+    # docs/a.md, docs/b.md exist; pattern "docs/a?.md" would match a.md if
+    # ? were a glob wildcard. Under our contract it must NOT glob.
+    d = tmp_path / "docs"
+    d.mkdir()
+    (d / "a.md").write_text("a", encoding="utf-8")
+    (d / "b.md").write_text("b", encoding="utf-8")
+    refs = _refs("See docs/a?.md.")
+    findings = check_ambiguity(refs, tmp_path)
+    assert findings == ()
+
+
+def test_double_star_is_not_recursive(tmp_path):
+    # Even if benchmarks/a.md exists, "**/*.md" must not trigger recursive
+    # glob. No E7 finding.
+    b = tmp_path / "benchmarks"
+    b.mkdir()
+    (b / "a.md").write_text("a", encoding="utf-8")
+    refs = _refs("See **/*.md.")
+    findings = check_ambiguity(refs, tmp_path)
+    assert findings == ()
