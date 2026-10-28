@@ -46,11 +46,30 @@ class FenceBlock:
 
 
 @dataclass(frozen=True)
+class Section:
+    """A Markdown heading and the body that belongs to it (until the next
+    heading of equal or higher level).
+
+    ``start_line`` is the heading line (1-based, original file).
+    ``end_line`` is the first line of the next equal/higher-level heading
+    (or the end of the document). ``body_text`` is the raw lines between
+    ``start_line + 1`` and ``end_line - 1``, joined by ``\n``.
+    """
+
+    level: int
+    title: str
+    start_line: int
+    end_line: int
+    body_text: str
+
+
+@dataclass(frozen=True)
 class ParseResult:
     """Outcome of parsing one Markdown document."""
 
     contexts: tuple[MarkdownContext, ...]
     fences: tuple[FenceBlock, ...] = field(default_factory=tuple)
+    sections: tuple[Section, ...] = field(default_factory=tuple)
     diagnostics: tuple[str, ...] = field(default_factory=tuple)
 
     def paragraphs(self) -> list[MarkdownContext]:
@@ -116,6 +135,9 @@ def parse_text(text: str) -> ParseResult:
     paragraph_counter = 0
     list_item_counter = 0
     in_heading = False
+    pending_heading_level = 0
+    pending_heading_line = 0
+    headings: list[tuple[int, str, int]] = []  # (level, title, start_line)
 
     i = 0
     n = len(tokens)
@@ -125,6 +147,8 @@ def parse_text(text: str) -> ParseResult:
 
         if ttype == "heading_open":
             in_heading = True
+            pending_heading_level = int(tok.tag[1])  # h1 -> 1
+            pending_heading_line = _to_1based(tok.map, offset)[0]
             i += 1
             continue
 
@@ -134,7 +158,9 @@ def parse_text(text: str) -> ParseResult:
             continue
 
         if ttype == "inline" and in_heading:
-            # Heading text is not a context; skip silently.
+            headings.append(
+                (pending_heading_level, tok.content.strip(), pending_heading_line)
+            )
             i += 1
             continue
 
@@ -247,8 +273,36 @@ def parse_text(text: str) -> ParseResult:
     # sorting by start line restores top-to-bottom order.
     contexts.sort(key=lambda c: (c.start_line, c.end_line, c.context_id))
 
+    # Build Section objects from headings. Body is raw lines between the
+    # heading line and the next heading of equal or higher level (or EOF).
+    body_lines = body.split("\n")
+    sections: list[Section] = []
+    for idx, (level, title, h_line) in enumerate(headings):
+        end_line = len(body_lines) + 1  # 1-based exclusive
+        for later_level, _later_title, later_line in headings[idx + 1 :]:
+            if later_level <= level:
+                end_line = later_line
+                break
+        # Body lines are body[h_line .. end_line-2] in 0-based body_lines.
+        # h_line is 1-based original file; body is offset-shifted, but body
+        # line k corresponds to original line k + offset + 1. We already have
+        # h_line in original coordinates; convert to body 0-based index.
+        body_start_0 = h_line - offset - 1  # exclusive of heading line itself
+        body_end_0 = end_line - offset - 1
+        body_slice = body_lines[body_start_0 + 1 : body_end_0]
+        sections.append(
+            Section(
+                level=level,
+                title=title,
+                start_line=h_line,
+                end_line=end_line,
+                body_text="\n".join(body_slice),
+            )
+        )
+
     return ParseResult(
         contexts=tuple(contexts),
         fences=tuple(fences),
+        sections=tuple(sections),
         diagnostics=tuple(diagnostics),
     )

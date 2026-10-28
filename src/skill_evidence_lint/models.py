@@ -29,6 +29,7 @@ class RuleID(StrEnum):
     E1 = "E1"
     E2 = "E2"
     E3 = "E3"
+    E5 = "E5"
 
 
 @dataclass(frozen=True)

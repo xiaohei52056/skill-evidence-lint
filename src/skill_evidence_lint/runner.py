@@ -23,6 +23,7 @@ from pathlib import Path
 from .claim_extractor import extract_candidate_claims
 from .evidence_association import associate_evidence
 from .evidence_extractor import extract_evidence_references
+from .evidence_section import check_sections
 from .models import Finding, RuleID
 from .parser import parse_text
 from .path_checker import check_local_paths
@@ -104,9 +105,13 @@ def run_check(skill_path: str) -> RunResult:
         contexts=parsed.contexts,
         fences=parsed.fences,
     )
+    e5_findings = check_sections(parsed.sections)
 
     findings = (
-        list(association.findings) + list(e2_findings) + list(e3_findings)
+        list(association.findings)
+        + list(e2_findings)
+        + list(e3_findings)
+        + list(e5_findings)
     )
     # Deterministic order: line, rule id, then message for stability.
     findings.sort(key=lambda f: (f.line, str(f.rule_id), f.message))
