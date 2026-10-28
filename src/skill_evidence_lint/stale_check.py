@@ -338,7 +338,10 @@ class _EvidenceFile:
 
 def _read_evidence_file(resolved: Path) -> _EvidenceFile | None:
     try:
-        raw = resolved.read_bytes()[: MAX_READ_BYTES + 1]
+        with resolved.open("rb") as fh:
+            # Bound the actual read so multi-hundred-MiB evidence files do
+            # not get slurped into memory. +1 lets us detect overflow.
+            raw = fh.read(MAX_READ_BYTES + 1)
     except OSError:
         return None
     if len(raw) > MAX_READ_BYTES:
