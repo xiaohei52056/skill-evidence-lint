@@ -99,7 +99,11 @@ def run_check(skill_path: str) -> RunResult:
 
     association = associate_evidence(claims, references)
     e2_findings = check_local_paths(references, skill_dir)
-    e3_findings = check_repro_cues(claims)
+    e3_findings = check_repro_cues(
+        claims,
+        contexts=parsed.contexts,
+        fences=parsed.fences,
+    )
 
     findings = (
         list(association.findings) + list(e2_findings) + list(e3_findings)

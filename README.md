@@ -73,7 +73,7 @@ The current pipeline has one candidate-claim detection stage and three finding r
 | **C1 — Candidate effect claims** | Detects a conservative set of English quantitative or zero-related effect claims. C1 is the claim-detection stage, not a verdict that a claim is true. | `Reduces processing time by 40%.` |
 | **E1 — Missing in-context reference** | Reports a detected claim when no recognized URL or local path appears in the same paragraph or enclosing list item. A backtick command example does not clear E1. | A claim in one paragraph and a link only in the next paragraph. |
 | **E2 — Local-path problem** | Reports detected local paths that do not exist, resolve outside the Skill root, or cannot be resolved safely. | A missing `references/benchmark.md` or a symlink that points outside the Skill directory. |
-| **E3 — Missing reproducibility cue** | Reports a numeric claim when its own paragraph or list item contains none of: an allowlisted command in inline code (`python`, `npm`, `go`, `cargo`, `bash`, …), an input/dataset/config phrase (`on dataset X`, `using configuration Y`), or a metric-definition phrase (`measured as …`, `pass rate`, `accuracy on …`). | A bare "cuts latency by 40%" with no command, dataset, or metric phrase nearby. |
+| **E3 — Missing reproducibility cue** | Reports a numeric claim when neither its own paragraph/list item nor a directly adjacent fenced command block contains any of: an allowlisted command with a positional argument (`python benchmark.py`, `npm test`, `cargo bench`, …), an input/dataset/config phrase (`on dataset X`, `using configuration Y`), or a metric-definition phrase (`measured as …`, `pass rate`, `accuracy on …`). Environment-only commands such as `python --version` do not count. | A bare "cuts latency by 40%" with no command, dataset, or metric phrase nearby. |
 
 E3's "verifiable" label means only that a recognizable textual cue was found — it does not mean a benchmark ran, that the evidence is authentic, or that the result is actually reproducible.
 
@@ -224,7 +224,7 @@ Implemented in v0.1.0:
 - C1 candidate effect-claim extraction
 - E1 in-context evidence-reference association
 - E2 local-path existence and root-confinement checks
-- E3 reproducibility-cue coverage (command / input-dataset / metric-definition cues)
+- E3 reproducibility-cue coverage (command / input-dataset / metric-definition cues, with adjacent fenced-block support)
 - CLI checks for a Skill directory or a direct `SKILL.md` path
 
 Not implemented:

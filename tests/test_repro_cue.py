@@ -13,14 +13,11 @@ def _claims_for(text: str):
     return extract_candidate_claims(parsed.contexts), parsed
 
 
-def _e3_lines(findings):
-    return [f.line for f in findings if f.rule_id is RuleID.E3]
-
-
-# --- cue presence detection ------------------------------------------------- #
+# --- inline cue presence detection ----------------------------------------- #
 
 
 def test_command_cue_npm_in_inline_code():
+    # `npm run benchmark` has a positional arg, so it counts.
     assert has_repro_cues("run `npm run benchmark` to verify.") == (
         True,
         False,
@@ -28,12 +25,25 @@ def test_command_cue_npm_in_inline_code():
     )
 
 
-def test_command_cue_python_in_inline_code():
-    assert has_repro_cues("execute `python tests/bench.py` for numbers.")[0] is True
+def test_command_cue_python_with_script():
+    cmd, _, _ = has_repro_cues("execute `python tests/bench.py` for numbers.")
+    assert cmd is True
+
+
+def test_env_only_command_does_not_count():
+    # `python --version` is environment-only; no positional target.
+    cmd, _, _ = has_repro_cues("run `python --version` to check setup.")
+    assert cmd is False
+
+
+def test_arbitrary_backtick_does_not_count_as_command():
+    assert has_repro_cues("We improved by 40%, see `foo` for details.")[0] is False
 
 
 def test_input_cue_dataset_phrase():
-    cmd, inp, _ = has_repro_cues("We observed 40% improvement on dataset imagenette.")
+    cmd, inp, _ = has_repro_cues(
+        "We observed 40% improvement on dataset imagenette."
+    )
     assert inp is True
     assert cmd is False
 
@@ -53,18 +63,15 @@ def test_metric_cue_measured_as():
     assert metric is True
 
 
-def test_arbitrary_backtick_does_not_count_as_command():
-    # `foo` is not an allowlisted command.
-    assert has_repro_cues("We improved by 40%, see `foo` for details.")[0] is False
-
-
-# --- end-to-end E3 finding emission ----------------------------------------- #
+# --- end-to-end E3 finding emission ---------------------------------------- #
 
 
 def test_numeric_claim_with_no_cue_emits_e3():
     text = "We reduced processing time by 40%."
-    claims, _ = _claims_for(text)
-    findings = check_repro_cues(claims)
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
     assert len(findings) == 1
     assert findings[0].rule_id is RuleID.E3
     assert "command" in findings[0].message
@@ -72,32 +79,52 @@ def test_numeric_claim_with_no_cue_emits_e3():
     assert "metric-definition" in findings[0].message
 
 
-def test_numeric_claim_with_command_cue_emits_no_e3():
+def test_numeric_claim_with_inline_benchmark_command_no_e3():
     text = "We reduced processing time by 40%, run `python bench.py`."
-    claims, _ = _claims_for(text)
-    assert check_repro_cues(claims) == ()
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
+    assert findings == ()
 
 
-def test_numeric_claim_with_input_cue_emits_no_e3():
+def test_env_only_command_still_emits_e3():
+    # `python --version` is not a benchmark cue; E3 must still fire.
+    text = "We reduced processing time by 40%, run `python --version`."
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
+    assert len(findings) == 1
+
+
+def test_numeric_claim_with_input_cue_no_e3():
     text = "We reduced processing time by 40% on dataset imagenette."
-    claims, _ = _claims_for(text)
-    assert check_repro_cues(claims) == ()
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
+    assert findings == ()
 
 
-def test_numeric_claim_with_metric_cue_emits_no_e3():
+def test_numeric_claim_with_metric_cue_no_e3():
     text = "We achieve 92% pass rate on the smoke suite."
-    claims, _ = _claims_for(text)
-    assert check_repro_cues(claims) == ()
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
+    assert findings == ()
 
 
 def test_cue_in_other_paragraph_does_not_count():
-    # Claim in paragraph 1; cue in paragraph 2. E3 must still fire.
     text = (
         "We reduced processing time by 40%.\n\n"
         "To reproduce, run `python bench.py`."
     )
-    claims, _ = _claims_for(text)
-    findings = check_repro_cues(claims)
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
     assert len(findings) == 1
 
 
@@ -106,26 +133,71 @@ def test_cue_in_other_list_item_does_not_count():
         "- We reduced processing time by 40%.\n"
         "- Reproduce with `python bench.py`."
     )
-    claims, _parsed = _claims_for(text)
-    # The first list item carries the claim; the second item is a different
-    # context and must not satisfy the cue for the first.
-    findings = check_repro_cues(claims)
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
     assert len(findings) == 1
-    # Both bullets are top-level list items; E3 should fire on the claim item.
     assert any(f.rule_id is RuleID.E3 for f in findings)
 
 
-def test_non_allowlisted_command_does_not_silence_e3():
-    # `foobar` is not in the allowlist; E3 should still fire.
-    text = "We reduced processing time by 40%, see `foobar`."
-    claims, _ = _claims_for(text)
-    findings = check_repro_cues(claims)
+# --- fenced command block association --------------------------------------- #
+
+
+def test_fenced_benchmark_block_immediately_after_claim():
+    text = (
+        "We reduced processing time by 40%.\n\n"
+        "```bash\n"
+        "python benchmark.py --dataset imagenette\n"
+        "```\n"
+    )
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
+    assert findings == (), findings
+
+
+def test_fenced_block_separated_by_paragraph_does_not_count():
+    text = (
+        "We reduced processing time by 40%.\n\n"
+        "Here is some unrelated prose.\n\n"
+        "```bash\n"
+        "python benchmark.py\n"
+        "```\n"
+    )
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
     assert len(findings) == 1
 
 
-def test_unrelated_command_in_context_silences_e3_by_design():
-    # `python` is allowlisted even if the command itself is unrelated. The
-    # rule is conservative about cues, not about judging relevance.
-    text = "We reduced processing time by 40%, run `python --version`."
-    claims, _ = _claims_for(text)
-    assert check_repro_cues(claims) == ()
+def test_fenced_block_under_different_list_item_does_not_count():
+    text = (
+        "- We reduced processing time by 40%.\n"
+        "- Notes:\n"
+        "  ```bash\n"
+        "  python benchmark.py\n"
+        "  ```\n"
+    )
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
+    # The claim is in the first list item; the fence is in the second item.
+    assert len(findings) == 1
+
+
+def test_fenced_env_only_command_does_not_silence_e3():
+    text = (
+        "We reduced processing time by 40%.\n\n"
+        "```bash\n"
+        "python --version\n"
+        "```\n"
+    )
+    claims, parsed = _claims_for(text)
+    findings = check_repro_cues(
+        claims, contexts=parsed.contexts, fences=parsed.fences
+    )
+    assert len(findings) == 1

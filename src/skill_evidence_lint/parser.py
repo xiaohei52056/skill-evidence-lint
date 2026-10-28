@@ -31,10 +31,26 @@ from .models import ContextType, MarkdownContext
 
 
 @dataclass(frozen=True)
+class FenceBlock:
+    """A fenced code block outside the paragraph/list-item context model.
+
+    E3 uses these to recognize commands that are directly adjacent to a claim
+    (no intervening paragraph, list item, or heading). The fence is *not*
+    turned into a claim/evidence context — it is a sibling block.
+    """
+
+    start_line: int
+    end_line: int
+    info: str
+    text: str
+
+
+@dataclass(frozen=True)
 class ParseResult:
     """Outcome of parsing one Markdown document."""
 
     contexts: tuple[MarkdownContext, ...]
+    fences: tuple[FenceBlock, ...] = field(default_factory=tuple)
     diagnostics: tuple[str, ...] = field(default_factory=tuple)
 
     def paragraphs(self) -> list[MarkdownContext]:
@@ -95,6 +111,7 @@ def parse_text(text: str) -> ParseResult:
     tokens: list[Token] = md.parse(body)
 
     contexts: list[MarkdownContext] = []
+    fences: list[FenceBlock] = []
     stack: list[_OpenListItem] = []
     paragraph_counter = 0
     list_item_counter = 0
@@ -189,8 +206,22 @@ def parse_text(text: str) -> ParseResult:
             i += 1
             continue
 
-        if ttype in ("fence", "code_block", "hr"):
-            # Deliberately excluded from contexts.
+        if ttype == "hr":
+            i += 1
+            continue
+
+        if ttype in ("fence", "code_block"):
+            # Capture fenced blocks for E3 adjacent-command detection, but do
+            # NOT turn them into claim/evidence contexts.
+            f_start, f_end = _to_1based(tok.map, offset)
+            fences.append(
+                FenceBlock(
+                    start_line=f_start,
+                    end_line=f_end,
+                    info=(tok.info or "").strip(),
+                    text=tok.content or "",
+                )
+            )
             i += 1
             continue
 
@@ -216,4 +247,8 @@ def parse_text(text: str) -> ParseResult:
     # sorting by start line restores top-to-bottom order.
     contexts.sort(key=lambda c: (c.start_line, c.end_line, c.context_id))
 
-    return ParseResult(contexts=tuple(contexts), diagnostics=tuple(diagnostics))
+    return ParseResult(
+        contexts=tuple(contexts),
+        fences=tuple(fences),
+        diagnostics=tuple(diagnostics),
+    )
