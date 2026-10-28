@@ -32,14 +32,17 @@ def _print_report(result: RunResult) -> None:
     typer.echo(f"  Findings : {len(result.findings)}")
 
     if not result.findings:
-        typer.echo("No issues found by currently implemented rules (C1/E1/E2).")
+        typer.echo("No issues found by currently implemented rules (C1/E1/E2/E3).")
     else:
         for f in result.findings:
             typer.echo(f"  {f.rule_id} (line {f.line}): {f.message}")
 
     e1 = result.count_for(RuleID.E1)
     e2 = result.count_for(RuleID.E2)
-    typer.echo(f"Summary: E1={e1} E2={e2}. Findings are reports, not failures.")
+    e3 = result.count_for(RuleID.E3)
+    typer.echo(
+        f"Summary: E1={e1} E2={e2} E3={e3}. Findings are reports, not failures."
+    )
 
 
 @app.callback(invoke_without_command=True)

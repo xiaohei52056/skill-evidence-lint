@@ -26,6 +26,7 @@ from .evidence_extractor import extract_evidence_references
 from .models import Finding, RuleID
 from .parser import parse_text
 from .path_checker import check_local_paths
+from .repro_cue import check_repro_cues
 
 
 class InputError(Exception):
@@ -98,8 +99,11 @@ def run_check(skill_path: str) -> RunResult:
 
     association = associate_evidence(claims, references)
     e2_findings = check_local_paths(references, skill_dir)
+    e3_findings = check_repro_cues(claims)
 
-    findings = list(association.findings) + list(e2_findings)
+    findings = (
+        list(association.findings) + list(e2_findings) + list(e3_findings)
+    )
     # Deterministic order: line, rule id, then message for stability.
     findings.sort(key=lambda f: (f.line, str(f.rule_id), f.message))
 
