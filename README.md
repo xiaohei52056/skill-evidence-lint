@@ -1,84 +1,114 @@
 # skill-evidence-lint
 
-**A static lint for `SKILL.md` that checks whether detectable English effect claims have a recognizable evidence reference in the same Markdown paragraph or enclosing list item.**
+[![Tests](https://github.com/xiaohei52056/skill-evidence-lint/actions/workflows/tests.yml/badge.svg)](https://github.com/xiaohei52056/skill-evidence-lint/actions/workflows/tests.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-[![CI](https://github.com/xiaohei52056/skill-evidence-lint/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/xiaohei52056/skill-evidence-lint/actions/workflows/tests.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](pyproject.toml)
-[![v0.1.0](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/xiaohei52056/skill-evidence-lint/releases/tag/v0.1.0)
+**Check whether an AI Skill's measurable effect claims have a nearby evidence reference — before you publish, install, or review it.**
 
-Other tools can test how a Skill behaves, validate how it is structured, or measure whether it improves task performance. **skill-evidence-lint addresses a different, narrower question:** when a Skill's `SKILL.md` says something like *"reduces processing time by 40%"* or *"2x faster execution"*, does the surrounding Markdown actually point at evidence — and is that evidence path still inside the Skill folder?
+`skill-evidence-lint` is a lightweight, static linter for the `SKILL.md` files used by AI agents. It detects a conservative set of English effect claims, checks whether each claim has a recognizable evidence reference in the same Markdown context, and checks the safety and existence of detected local paths.
 
-It is a read-only static analyzer. It does not run your Skill, does not fetch URLs, and does not judge whether a claim is true.
+It checks the *presence and placement of references*, not whether a claim is true or whether a reference actually proves it.
 
----
+## The problem it solves
 
-## The problem
+AI Skills sometimes make statements such as:
 
-AI Skill manifests often mix procedural instructions with quantified effect claims:
+- “Reduces processing time by 40%.”
+- “Achieves 92% accuracy.”
+- “Runs 2x faster.”
+- “Zero downtime.”
 
-> "Reduces processing time by 40%."
-> "Achieves 92% accuracy."
-> "Zero downtime."
+These claims sound measurable, but a reader may not know where the supporting material is referenced—or whether a referenced local file exists. A general structure linter and a runtime test suite answer different questions; neither automatically ensures that each detectable effect claim in `SKILL.md` has a clearly associated evidence reference.
 
-These statements look concrete and measurable. But a reader of the file usually cannot tell, without careful inspection:
+`skill-evidence-lint` adds a small, focused check for that documentation gap. It helps authors and maintainers notice claims that need a reference before those claims are published or reviewed.
 
-- whether a supporting reference exists at all;
-- whether that reference is actually adjacent to the claim, or sitting in an unrelated paragraph three sections later;
-- whether a local file the claim points at still ships with the Skill.
+> **Important:** a detected URL or local path is only a reference. This tool does not verify the claim's truth, inspect evidence contents, or determine whether the evidence is sufficient.
 
-General Markdown linters do not model the "claim → adjacent evidence" relationship. Runtime tests measure behavior, but they do not automatically prove that every effect sentence in `SKILL.md` has a clearly associated evidence reference. `skill-evidence-lint` fills this documentation-level gap with a lightweight, offline check.
+## Who is it for?
+
+| User | When to use it | How it helps |
+|---|---|---|
+| **Skill authors** | Before publishing a Skill: “I wrote that this improves X. Did I include a reference? Does the local path exist?” | Run the linter locally and review C1/E1/E2 output before publishing. |
+| **Skill users and maintainers** | Before adopting or updating a downloaded Skill: “Do its detectable effect claims point to something I can locate?” | Run it against the downloaded Skill directory. This is a reference-coverage check, **not** a security audit or proof that the claims are true. |
+| **CI / PR maintainers** | When reviewing changes to `SKILL.md` and wanting a lightweight, non-blocking signal. | Add the CLI to an existing CI workflow. In v0.1.0, findings are report-only and do not fail the command. A dedicated GitHub Action and native PR annotations are not yet provided. |
 
 ## Where it fits in the Agent Skills toolchain
 
-Different tools answer different questions. This project is not a replacement for any of them.
+Different tools answer different questions. `skill-evidence-lint` is designed to complement—not replace—Skill linting, runtime testing, or performance evaluation.
 
-| Category | Primary question | Typical approach | Examples |
-|---|---|---|---|
-| Skill specification / quality linters | Is the Skill structurally valid and well-formed? | Static rules, metadata and quality checks | [skill-tools](https://github.com/skill-tools/skill-tools), [skills_lint.dart](https://github.com/google/skills_lint.dart) |
-| Runtime Skill testing frameworks | Does the Skill produce the expected behavior or artifacts? | Test cases, Agent execution, assertions | [skilltest](https://github.com/JiyangZhang/skilltest), [SkillProof](https://github.com/Dafenxz0/skillproof) |
-| Skill performance evaluation | Does the Skill improve task outcomes, and at what cost? | Controlled comparisons, benchmarks | (your evaluation harness) |
-| **skill-evidence-lint** | **Do detectable effect claims have recognizable evidence references in their local Markdown context?** | **Static claim detection, same-paragraph / same-list-item association, local path checks** | this repo |
+| Tool | Main question it helps answer | Typical approach |
+|---|---|---|
+| [skill-tools](https://github.com/skill-tools/skill-tools) | Is a Skill well-formed, does it follow expected conventions, and how does it score against its quality checks? | Static validation, lint rules, quality scoring, and routing utilities. |
+| [Google's `skills_lint.dart` repository](https://github.com/google/skills_lint.dart) | Does a Skill meet documented specification and directory requirements? | Static checks for items such as `SKILL.md`, frontmatter, directory layout, and relative paths. The repository notes that it is not an officially supported Google product. |
+| [SkillTest](https://github.com/JiyangZhang/skilltest) | Does a Skill produce the expected behavior or artifacts when an agent runs test cases? | Test cases, agent execution, and assertions against outputs. |
+| [SkillSeal](https://github.com/skillseal/skillseal) | Does a Skill pass structural, functional, and security checks in an isolated environment? | Static checks plus sandboxed functional tests and runtime observations; it can produce verifiable certification evidence. |
+| [NVIDIA SkillEvaluator](https://github.com/NVIDIA/SkillEvaluator) | Does a Skill meet quality gates, overlap with existing Skills, or affect agent task results? | A multi-tier workflow spanning validation, deduplication, and live evaluation. |
+| [SkillProof](https://github.com/Dafenxz0/skillproof) | Does a Skill improve real task outcomes, and what are the quality, latency, and cost trade-offs? | Controlled benchmark runs and comparisons. |
+| **`skill-evidence-lint`** | Do detectable effect claims have a recognizable evidence reference in their local Markdown context? | Static claim detection, strict in-context reference association, and local-path checks. |
 
-A reasonable layered workflow — optional, not mandatory — is:
+These categories overlap in the broader goal of improving Skill quality, but they are not interchangeable. For example, a behavior test may show that a Skill works on a test case; a structure linter may show that its files are valid. `skill-evidence-lint` asks a narrower documentation question: **when a detectable effect claim is written down, is a reference placed where a reader would expect to find it?**
 
-1. Validate the Skill's structure with an appropriate specification linter.
-2. Run **skill-evidence-lint** to inspect effect-claim evidence-reference coverage.
-3. Use runtime tests and evaluation tools to measure actual behavior and outcomes.
+A practical workflow may use more than one layer:
+
+1. Validate the Skill's structure with a specification or quality linter.
+2. Check effect-claim reference coverage with `skill-evidence-lint`.
+3. Use runtime tests or benchmarks when you need to measure actual behavior or performance.
+
+### Why use this focused check?
+
+- **It checks a different layer.** It focuses on whether measurable effect claims have locally associated references, rather than judging overall Skill quality or executing test cases.
+- **The association rule is explicit.** A URL or local path must appear in the same paragraph or enclosing list item. The tool does not guess from nearby sections.
+- **No Agent run or API key is needed.** The check is static and uses conservative text patterns; it does not call an LLM.
+- **It works offline.** URLs are not fetched and local evidence contents are not opened.
+- **It is report-only by default.** E1/E2 findings do not fail the command, making the current CLI suitable for advisory CI checks.
+- **It makes boundaries clear.** A reference can be present and still be irrelevant, inaccurate, or insufficient; this linter does not certify otherwise.
 
 ## What it checks
 
-| Rule | Target | Catches | Known limits |
-|---|---|---|---|
-| **C1** | Candidate English effect claims | Four conservative quantified patterns: `Q-VERB-BY` ("reduces … by 40%"), `Q-ACHIEVES-NUM` ("achieves 92%"), `Q-NUM-COMP` ("2x faster"), `Q-ZERO` ("zero downtime", "near-zero latency") | English only; paragraphs only; code blocks, headings, frontmatter excluded; qualitative claims and passive phrasing without the target verbs are not matched |
-| **E1** | Evidence association | A candidate claim with **no local path or URL reference in the same paragraph or enclosing list item** | Adjacent paragraphs, headings, and a shared "Evidence" section never count; backtick commands do not count as evidence |
-| **E2** | Local evidence paths | A referenced local file that is missing, escapes the Skill root, or cannot be resolved | URLs are never fetched; files are never opened; only path metadata (`stat`) is used |
+The current v0.1.0 pipeline has one candidate-claim detection stage and two finding rules.
+
+| Rule | Purpose | Example |
+|---|---|---|
+| **C1 — Candidate effect claims** | Detects a conservative set of English quantitative or zero-related effect claims. C1 is the claim-detection stage, not a verdict that a claim is true. | `Reduces processing time by 40%.` |
+| **E1 — Missing in-context reference** | Reports a detected claim when no recognized URL or local path appears in the same paragraph or enclosing list item. A backtick command example does not clear E1. | A claim in one paragraph and a link only in the next paragraph. |
+| **E2 — Local-path problem** | Reports detected local paths that do not exist, resolve outside the Skill root, or cannot be resolved safely. | A missing `references/benchmark.md` or a symlink that points outside the Skill directory. |
+
+### Which claims can C1 detect?
+
+C1 currently uses four conservative pattern families:
+
+- **Effect verb + `by` + number/unit:** “reduces processing time by 40%”
+- **Achievement verb + number/unit:** “achieves 92% accuracy”
+- **Number/unit + comparative:** “2x faster”, “30% less memory”
+- **Zero-related phrasing:** “zero downtime”, “near-zero latency”
+
+Negated and some hypothetical claims are filtered. The detector is intentionally limited: it is not a general natural-language understanding system and does not detect every possible effect claim.
+
+### How evidence association works
+
+A reference counts for E1 only when it appears in the claim's **own paragraph or enclosing list item**. A nearby paragraph, a shared heading, or a distant “Evidence” section is not enough. This conservative rule makes the association explicit instead of guessing which reference is intended for which claim.
+
+Recognized URLs are not fetched. Local paths are checked for existence and confinement to the Skill root, but the referenced files are not opened or read.
 
 ## How it works
 
 ```mermaid
-flowchart LR
-  A[SKILL.md] --> B[Markdown context parser]
-  B --> C[C1: candidate English claim extractor]
-  B --> D[Evidence reference extractor]
-  C --> E[E1: same-paragraph / same-list-item association]
-  D --> E
-  D --> F[E2: local path confinement + existence]
-  E --> G[Sorted findings report]
-  F --> G
+flowchart TD
+    A[SKILL.md] --> B[Parse Markdown contexts]
+    B --> C[Detect candidate effect claims: C1]
+    B --> D[Extract evidence references]
+    C --> E[Associate references in the same context: E1]
+    D --> F[Check local path existence and root confinement: E2]
+    E --> G[Report findings]
+    F --> G
 ```
 
-Result semantics:
+The tool reads `SKILL.md`, parses Markdown contexts, extracts candidates and references, checks association and local paths, then prints a deterministic report. It does not run the Skill, a shell command, an evidence script, or an Agent.
 
-- **C1** identifies *candidate* claims. It does not establish that the claims are true.
-- **E1** says: no recognized URL or local path was associated with this candidate in the permitted context.
-- **E2** says: a local reference is missing, escapes the Skill root, or cannot be resolved.
-- A URL is never fetched; its reachability or content is not verified.
-- A recognized reference is not proof of evidential sufficiency.
+## Example: place the reference with the claim
 
-## Before / after example
-
-A claim with no recognizable reference in its own paragraph:
+### Missing reference
 
 ```markdown
 ## Performance
@@ -86,31 +116,34 @@ A claim with no recognizable reference in its own paragraph:
 Reduces processing time by 40%.
 ```
 
-If C1 matches the sentence, E1 will report that no local path or URL appears in the same paragraph or enclosing list item.
+If C1 detects the sentence, it can produce an **E1** finding because no recognized reference appears in that paragraph or its enclosing list item.
 
-Add the reference in the *same* paragraph:
+### Reference in the same paragraph
 
 ```markdown
 ## Performance
 
-Reduces processing time by 40%, according to [the benchmark report](references/benchmark.md).
+Reduces processing time by 40%, according to the
+[benchmark report](references/benchmark.md).
 ```
 
-The in-paragraph link clears E1. E2 can still fire if `references/benchmark.md` is missing or escapes the Skill root — and a URL in that slot would clear E1 without being fetched or verified.
+The link can clear E1 association because it is in the same paragraph. E2 will still report a local-path problem if `references/benchmark.md` does not exist or resolves outside the Skill root. Even when the path exists, the tool does **not** read the report or verify that it supports the 40% figure.
 
-## Why use it
+A link in the next paragraph does not count as a local association:
 
-- **Focused signal.** A small, explicit set of English quantified patterns, rather than an open-ended semantic guesser.
-- **Local-context association.** A reference must sit in the same paragraph or list item. A neighboring paragraph or a global "Evidence" section does not count.
-- **Static and lightweight.** Pure Markdown + path metadata. No Agent launch, no Skill execution, no evidence-script run.
-- **Offline by design.** No URL fetching, no network calls.
-- **Path confinement.** Every local reference is resolved against the directory containing `SKILL.md`; `..` segments and symlink escapes are reported, not followed.
-- **Predictable CI behavior.** E1/E2 findings are reported but do not fail the command in v0.1.0. Invalid input and unexpected internal errors use distinct exit codes.
-- **Transparent limitations.** The tool never claims that a reference proves the associated statement.
+```markdown
+Reduces processing time by 40%.
+
+See the [benchmark report](references/benchmark.md).
+```
+
+This is intentional: the tool does not infer relationships between separate paragraphs.
 
 ## Quick start
 
-Requires Python 3.11 or newer. **The package is not yet on PyPI.** Install from source:
+Requirements: **Python 3.11 or newer**.
+
+The package is not currently published on PyPI. Install it from the source repository:
 
 ```bash
 git clone https://github.com/xiaohei52056/skill-evidence-lint.git
@@ -118,104 +151,97 @@ cd skill-evidence-lint
 python -m pip install .
 ```
 
-Check a Skill directory (looks for `SKILL.md` inside):
+Check a Skill directory containing `SKILL.md`:
 
 ```bash
-skill-evidence-lint path/to/skill
+skill-evidence-lint ./my-skill
 ```
 
-Or point directly at a file named `SKILL.md`:
+Or pass the `SKILL.md` file directly:
 
 ```bash
-skill-evidence-lint path/to/skill/SKILL.md
+skill-evidence-lint ./my-skill/SKILL.md
 ```
 
-A minimal example:
+When passing a file directly, its basename must be exactly `SKILL.md`.
 
-```
-example-skill/
-├── SKILL.md
-└── results.md
-```
+For development:
 
-```markdown
-# My Skill
-
-Our optimizer reduces build time by 40%, see results.md.
-
-The pipeline cuts CI cost by 2x.
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -ra
+python -m ruff check .
 ```
 
-Actual output on v0.1.0:
+## Understanding the report
 
-```
-skill-evidence-lint
-  SKILL.md : example-skill/SKILL.md
-  Claims   : 2
-  Refs     : 1
-  Findings : 1
-  E1 (line 5): No local-path or URL evidence reference found in the same paragraph or the enclosing list item. This is a coverage observation, not a judgment that the claim is false or that evidence is invalid.
-Summary: E1=1 E2=0. Findings are reports, not failures.
-```
+The command summarizes the checked file, number of candidate claims, number of references, and findings. Findings identify a rule, line number, and message.
 
-Exit code is **0** even with one E1 finding. The first claim is paired with `results.md` in its own paragraph; the second claim has no reference in its paragraph, so E1 flags it.
-
-## Reading the report
-
-- **Claims** — candidate effect claims C1 matched. Not a count of all real effect claims in the document.
-- **Refs** — recognizable references (local paths, URLs, backtick commands). Backtick commands are recorded but do **not** clear E1.
-- **Findings** — rule reports. Not a count of false claims.
-- **E1 (line N)** — candidate claim at line N has no qualifying reference in its own paragraph or list item.
-- **E2 (line N)** — a local path referenced at line N is missing or escapes the Skill root.
-- **Summary: E1=… E2=…** — findings by rule.
-
-### Exit codes
-
-| Code | Meaning |
+| Exit code | Meaning |
 |---|---|
-| `0` | Check completed normally. E1/E2 findings do **not** change this. |
-| `2` | User input error: bad path, missing `SKILL.md`, file not named `SKILL.md`. |
-| `3` | Unexpected internal error (see `internal error:` on stderr). |
+| `0` | The check completed. E1/E2 findings are reports and do not cause a non-zero exit. |
+| `2` | Invalid input, such as a missing path, a directory without `SKILL.md`, or a direct file whose name is not exactly `SKILL.md`. |
+| `3` | An unexpected internal error occurred. A concise error summary is printed to stderr without a traceback by default. |
 
-## Safety, trust boundaries, and non-goals
+This is suitable for a report-only CI step: current E1/E2 findings will not, by themselves, fail the job. If you need a blocking quality gate or native pull-request annotations, those require additional integration that is not part of v0.1.0.
 
-`skill-evidence-lint` deliberately does **not**:
+## Safety and trust boundaries
 
-- prove that an effect claim is true;
-- verify that a referenced document actually supports the claim;
-- fetch URLs or check their reachability;
-- execute the Skill, backtick commands, or evidence scripts;
-- recognize qualitative claims, Chinese text, headings, code blocks, or frontmatter;
-- guarantee that it finds every under-referenced claim.
+- **Static and read-only:** the tool does not execute Skills, shell commands, or evidence scripts.
+- **Offline by design:** it does not access the network or fetch URLs.
+- **Path confinement:** detected local paths are resolved and checked against the Skill root, including symlink escape checks.
+- **No evidence-content inspection:** local evidence files are not opened or read; URLs are not fetched.
+- **No truth verdict:** finding a reference does not prove the associated claim is accurate, reproducible, or adequately supported.
 
-Not implemented in v0.1: E3–E7, auto-fix, LLM-as-judge, URL reachability, JSON output, multi-file batch checks, and a reusable GitHub Action.
+These boundaries reduce the work the linter itself performs, but they do not make an untrusted Skill safe to install or execute. Review a Skill's instructions and executable contents separately.
 
-## Evaluation
+## Evaluation and limitations
 
-Numbers come from [`docs/c1-evaluation.md`](docs/c1-evaluation.md) and [`tests/fixtures/c1_eval/manifest.json`](tests/fixtures/c1_eval/manifest.json).
+The current C1 evaluation uses two kinds of examples:
 
-- **Synthetic fixture (project-owned):** 13 hand-written in-scope spans across all four C1 patterns. **C1 caught 13/13.**
-- **Real documents:** 17 redistributable public `SKILL.md` files — 13 Apache-2.0 from `anthropics/skills` at a pinned commit, 4 MIT from `obra/superpowers` at a pinned commit. C1 produced **0 candidates**, and manual review found **0 in-scope positive spans** in that set.
-- **Real-world precision and recall are not computable** from this sample. The corpus is heavily procedural; "0 candidates, 0 positives" is an observation about this particular set, not a real-world accuracy rate. Five additional Anthropic files were examined but excluded because their per-directory LICENSE forbids redistribution.
+- **17 redistributable real-world `SKILL.md` samples** from two public repositories: 13 Apache-2.0 samples from `anthropics/skills` and 4 MIT samples from `obra/superpowers`.
+- **A synthetic fixture of 13 in-scope examples**, all 13 of which were detected by the current patterns.
 
-CI runs on Ubuntu (Python 3.11, 3.12), macOS (3.12), and Windows (3.12): **113 passed, Ruff clean on every job.** This includes the two symlink-based E2 checks that are skipped on Windows developer machines lacking the symlink-privilege token.
+The real-world sample contained **zero in-scope positive claims** and had **zero observed C1 false positives**. Because the sample contained no in-scope positive claims, it cannot establish real-world recall, and real-world precision/recall cannot be computed from this corpus. The synthetic 13/13 result demonstrates behavior on the selected fixtures; it is not a real-world accuracy rate or proof of broad recall.
+
+See [`docs/c1-evaluation.md`](docs/c1-evaluation.md) for the methodology and detailed results. Evaluation samples are test fixtures, not runtime dependencies; their provenance and licenses are recorded in `tests/fixtures/c1_eval/manifest.json` and the accompanying notices.
+
+Known limitations include:
+
+- English claims only; Chinese-language claims are not included in the coverage denominator.
+- C1 may miss qualitative claims, passive-voice phrasing, and other wording outside its current patterns.
+- Limited Markdown context handling means some blockquote, table, or HTML structures may not be modeled as users expect.
+- E1 checks reference presence and placement, not whether the source is authoritative or sufficient.
+- E2 checks local path metadata, not the contents of referenced files.
+
+## Current scope
+
+Implemented in v0.1.0:
+
+- C1 candidate effect-claim extraction
+- E1 in-context evidence-reference association
+- E2 local-path existence and root-confinement checks
+- CLI checks for a Skill directory or a direct `SKILL.md` path
+
+Not implemented in v0.1.0:
+
+- E3–E7 or broader semantic claim analysis
+- Automatic fixes
+- LLM-based truthfulness or evidence-sufficiency judgments
+- URL reachability checks
+- JSON output or multi-file batch checking
+- A published first-party GitHub Action or native PR annotations
 
 ## Development
 
 ```bash
 python -m pip install -e ".[dev]"
-py -3.12 -m pytest -ra
-py -3.12 -m ruff check .
+python -m pytest -ra
+python -m ruff check .
 ```
 
-The offline evaluation runner is dev-only and not imported by pytest:
-
-```bash
-py -3.12 scripts/run_c1_eval.py
-```
-
-Issues and Pull Requests are welcome. There is no formal code of conduct yet.
+Contributions that improve focused detection, test coverage, documentation, and reproducible evaluation are welcome. Please keep behavior and evaluation claims aligned with tests and documented limitations.
 
 ## License
 
-MIT. See [LICENSE](LICENSE). Third-party evaluation fixtures carry their own licenses (Apache-2.0 for `anthropics/skills`, MIT for `obra/superpowers`); see `tests/fixtures/c1_eval/real/` and `manifest.json` for provenance.
+MIT. See [`LICENSE`](LICENSE).
