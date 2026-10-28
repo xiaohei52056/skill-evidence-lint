@@ -75,6 +75,7 @@ The current pipeline has one candidate-claim detection stage and three finding r
 | **E2 — Local-path problem** | Reports detected local paths that do not exist, resolve outside the Skill root, or cannot be resolved safely. | A missing `references/benchmark.md` or a symlink that points outside the Skill directory. |
 | **E3 — Missing reproducibility cue** | Reports a numeric claim when neither its own paragraph/list item nor a directly adjacent fenced command block contains any of: an allowlisted command with a positional argument (`python benchmark.py`, `npm test`, `cargo bench`, …), an input/dataset/config phrase (`on dataset X`, `using configuration Y`), or a metric-definition phrase (`measured as …`, `pass rate`, `accuracy on …`). Environment-only commands such as `python --version` do not count. | A bare "cuts latency by 40%" with no command, dataset, or metric phrase nearby. |
 | **E5 — Empty evidence section** | Reports `## Evidence`, `## Benchmark`, `## Results`, or `## Evaluation` headings whose body is empty or contains only a placeholder (`TODO`, `TBD`, `N/A`, `coming soon`, `add evidence here`). | A `## Evidence` section with no body, or one that just says `TODO`. |
+| **E6 — URL format/placeholder (offline)** | Info-level check on extracted `http(s)://` URLs. Flags URLs with no host (e.g. `http:///path`), reserved example domains (`example.com/org/net/edu`), or obvious template tokens (`your-domain`, `replace_me`, `{{...}}`). **Never makes a network request**; reachability is not tested. | `https://example.com/benchmark` is flagged as a reserved example domain, not as unreachable. |
 
 E3's "verifiable" label means only that a recognizable textual cue was found — it does not mean a benchmark ran, that the evidence is authentic, or that the result is actually reproducible.
 
@@ -227,11 +228,12 @@ Implemented in v0.1.0:
 - E2 local-path existence and root-confinement checks
 - E3 reproducibility-cue coverage (command / input-dataset / metric-definition cues, with adjacent fenced-block support)
 - E5 empty / placeholder-only evidence section detection
+- E6 offline URL format/placeholder check (no network)
 - CLI checks for a Skill directory or a direct `SKILL.md` path
 
 Not implemented:
 
-- E4 (stale evidence), E6 (URL format/placeholder check), E7 (ambiguous path)
+- E4 (stale evidence), E7 (ambiguous path)
 - Automatic fixes
 - LLM-based truthfulness or evidence-sufficiency judgments
 - URL reachability checks (E6 only checks syntax/placeholders, never fetches)

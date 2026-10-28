@@ -30,6 +30,7 @@ class RuleID(StrEnum):
     E2 = "E2"
     E3 = "E3"
     E5 = "E5"
+    E6 = "E6"
 
 
 @dataclass(frozen=True)

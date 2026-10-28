@@ -28,6 +28,7 @@ from .models import Finding, RuleID
 from .parser import parse_text
 from .path_checker import check_local_paths
 from .repro_cue import check_repro_cues
+from .url_check import check_urls
 
 
 class InputError(Exception):
@@ -106,12 +107,14 @@ def run_check(skill_path: str) -> RunResult:
         fences=parsed.fences,
     )
     e5_findings = check_sections(parsed.sections)
+    e6_findings = check_urls(references)
 
     findings = (
         list(association.findings)
         + list(e2_findings)
         + list(e3_findings)
         + list(e5_findings)
+        + list(e6_findings)
     )
     # Deterministic order: line, rule id, then message for stability.
     findings.sort(key=lambda f: (f.line, str(f.rule_id), f.message))
