@@ -141,3 +141,55 @@ A real positive-case corpus will likely come from one of:
 
 Until then, the 24-fixture decision-matrix set remains the regression
 suite; the contract §11.2 "real public Skill" threshold is **not met**.
+
+## P2.6c.3 — Public corpus run (2026-10-29)
+
+We fetched 23 candidate public SKILL.md files from the provided list and
+ran the current E4 implementation against each (as a standalone skill
+directory with only the SKILL.md present). Results:
+
+- 22 of 23 URLs returned valid SKILL.md content (A11 NVIDIA path 404'd).
+- 0 skills produced any E1 claim ("by N%" pattern) — all 22 are
+  instruction/tutorial prose, not quantitative claims backed by dated
+  evidence files.
+- 0 E4 findings across all 22 samples (expected: with no claims, there
+  is nothing for E4 to associate).
+- E2 fired on missing referenced files (we only downloaded SKILL.md,
+  not the referenced `references/*.md` sub-files). This is correct
+  behavior; E2 owns missing paths and E4 stays silent.
+- 6 samples had a date-like frontmatter field (`last_updated`): A01–A05
+  (PracticalSwan, `2026-09-08`) and A12 (Confluent, `2026-07-09`). Even
+  for these, no numeric claim exists, so E4 correctly produces nothing.
+
+### Calibration counts
+
+| Bucket | Count |
+|---|---|
+| Candidate links provided | 23 |
+| Valid SKILL.md files fetched | 22 |
+| License explicitly verified | 0 (all "partial" or "unknown"; GitHub API rate-limited, no pinned SHA) |
+| expected-e4 (labeled before running) | 0 |
+| expected-no-e4 | 0 |
+| out-of-scope | 22 |
+| ambiguous | 0 |
+| TP | n/a (no expected positives) |
+| FP | 0 |
+| FN | n/a |
+
+### Contract §11.2 threshold check
+
+- 20–30 real samples: **22 fetched** (count met, but license unverified
+  for redistribution; files analyzed read-only, not committed).
+- 0 false positives: **0** ✅.
+- ≥5 expected positives detected: **0** ❌ — the public skill ecosystem
+  does not contain evidence-backed quantitative claims in SKILL.md files.
+
+### Verdict
+
+**CALIBRATION INCOMPLETE.** The public corpus confirms E4 produces no
+false positives on real-world instruction skills (good — 0 FP across 22
+real files), but it provides zero positive cases. The rule's positive
+path is only exercised by the hand-authored fixtures. To meet the ≥5
+positive threshold, we need user-supplied SKILL.md files that actually
+make quantitative claims against dated evidence — i.e. the original
+target use case of this linter.
