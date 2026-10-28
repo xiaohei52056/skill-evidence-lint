@@ -12,6 +12,7 @@ from __future__ import annotations
 import typer
 
 from .models import RuleID
+from .report import dumps as dump_json
 from .runner import InputError, RunResult, run_check
 
 app = typer.Typer(
@@ -61,10 +62,25 @@ def main(
             "to a SKILL.md file."
         ),
     ),
+    output_format: str = typer.Option(
+        "text",
+        "--format",
+        case_sensitive=False,
+        help="Output format: 'text' (default, human-readable) or 'json' "
+        "(machine-readable report, schema skill-evidence-lint.report.v1).",
+    ),
 ) -> None:
     """Check a Skill directory for evidence-backed English claims (E1/E2)."""
     if ctx.invoked_subcommand is not None:
         return
+
+    fmt = output_format.lower()
+    if fmt not in ("text", "json"):
+        typer.echo(
+            f"error: unknown --format {output_format!r}; expected 'text' or 'json'",
+            err=True,
+        )
+        raise typer.Exit(code=2)
 
     try:
         result = run_check(skill_path)
@@ -76,7 +92,10 @@ def main(
         typer.echo(f"internal error: {exc}", err=True)
         raise typer.Exit(code=3) from exc
 
-    _print_report(result)
+    if fmt == "json":
+        typer.echo(dump_json(result))
+    else:
+        _print_report(result)
     # Findings never cause a non-zero exit.
     raise typer.Exit(code=0)
 

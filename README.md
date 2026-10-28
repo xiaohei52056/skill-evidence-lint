@@ -231,6 +231,7 @@ Implemented in v0.1.0:
 - E5 empty / placeholder-only evidence section detection
 - E6 offline URL format/placeholder check (no network)
 - E7 offline wildcard path ambiguity check (no subprocess, root-confined)
+- Stable versioned JSON output: `skill-evidence-lint --format json <path>` (schema `skill-evidence-lint.report.v1`)
 - CLI checks for a Skill directory or a direct `SKILL.md` path
 
 Not implemented:

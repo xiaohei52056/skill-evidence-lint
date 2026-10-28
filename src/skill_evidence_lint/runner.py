@@ -25,7 +25,7 @@ from .claim_extractor import extract_candidate_claims
 from .evidence_association import associate_evidence
 from .evidence_extractor import extract_evidence_references
 from .evidence_section import check_sections
-from .models import Finding, RuleID
+from .models import CandidateClaim, EvidenceReference, Finding, RuleID
 from .parser import parse_text
 from .path_checker import check_local_paths
 from .repro_cue import check_repro_cues
@@ -44,6 +44,8 @@ class RunResult:
     claim_count: int
     reference_count: int
     findings: tuple[Finding, ...]
+    claims: tuple[CandidateClaim, ...] = ()
+    references: tuple[EvidenceReference, ...] = ()
 
     def count_for(self, rule_id: RuleID) -> int:
         return sum(1 for f in self.findings if f.rule_id is rule_id)
@@ -127,4 +129,6 @@ def run_check(skill_path: str) -> RunResult:
         claim_count=len(claims),
         reference_count=len(references),
         findings=tuple(findings),
+        claims=tuple(claims),
+        references=tuple(references),
     )
