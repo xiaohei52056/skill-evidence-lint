@@ -28,12 +28,13 @@ _SEVERITY: dict[str, str] = {
     "E1": "warning",
     "E2": "error",
     "E3": "warning",
+    "E4": "info",
     "E5": "warning",
     "E6": "info",
     "E7": "info",
 }
 
-_RULE_ORDER = ["E1", "E2", "E3", "E5", "E6", "E7"]
+_RULE_ORDER = ["E1", "E2", "E3", "E4", "E5", "E6", "E7"]
 
 
 def _tool_version() -> str:
@@ -68,7 +69,7 @@ def _ref_to_dict(ref) -> dict:
 
 def _finding_to_dict(finding) -> dict:
     rule = str(finding.rule_id)
-    return {
+    out = {
         "rule_id": rule,
         "severity": _SEVERITY.get(rule, "info"),
         "line": finding.line,
@@ -76,6 +77,13 @@ def _finding_to_dict(finding) -> dict:
         "claim_id": finding.claim_id,
         "claim_text": finding.claim_text,
     }
+    # E4-only fields; contract §7.2 says these appear ONLY on E4 findings.
+    if rule == "E4":
+        out["evidence_path"] = finding.evidence_path
+        out["evidence_date"] = finding.evidence_date
+        out["skill_date"] = finding.skill_date
+        out["days_diff"] = finding.days_diff
+    return out
 
 
 def build_report(result: RunResult) -> dict:

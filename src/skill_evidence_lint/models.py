@@ -29,6 +29,7 @@ class RuleID(StrEnum):
     E1 = "E1"
     E2 = "E2"
     E3 = "E3"
+    E4 = "E4"
     E5 = "E5"
     E6 = "E6"
     E7 = "E7"
@@ -109,7 +110,13 @@ class EvidenceReference:
 
 @dataclass(frozen=True)
 class Finding:
-    """A reported lint finding (E1 or E2; C1 is not reported as a finding)."""
+    """A reported lint finding (E1/E2/E3/E4/E5/E6/E7; C1 is not reported).
+
+    The E4-only fields (``evidence_path`` / ``evidence_date`` / ``skill_date``
+    / ``days_diff``) are ``None`` for every rule except E4. They are declared
+    here so the JSON serializer can project them uniformly without relying on
+    duck-typed attributes.
+    """
 
     rule_id: RuleID
     message: str
@@ -117,6 +124,11 @@ class Finding:
     claim_text: str | None = None
     claim_id: str = ""
     line: int = 0
+    # E4-only (see docs/e4-contract.md). None for all other rules.
+    evidence_path: str | None = None
+    evidence_date: str | None = None
+    skill_date: str | None = None
+    days_diff: int | None = None
 
 
 @dataclass

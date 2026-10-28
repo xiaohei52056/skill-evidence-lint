@@ -24,7 +24,7 @@ def test_empty_report_schema_and_keys(tmp_path):
         "claims": 0,
         "references": 0,
         "findings": 0,
-        "by_rule": {"E1": 0, "E2": 0, "E3": 0, "E5": 0, "E6": 0, "E7": 0},
+        "by_rule": {"E1": 0, "E2": 0, "E3": 0, "E4": 0, "E5": 0, "E6": 0, "E7": 0},
     }
     assert report["claims"] == []
     assert report["references"] == []
@@ -59,7 +59,7 @@ def test_populated_report_contains_claims_refs_and_findings(tmp_path):
     assert {"reference_id", "ref_type", "raw", "line", "context_id", "exists"} <= ref.keys()
 
     finding = report["findings"][0]
-    assert finding["rule_id"] in {"E1", "E2", "E3", "E5", "E6", "E7"}
+    assert finding["rule_id"] in {"E1", "E2", "E3", "E4", "E5", "E6", "E7"}
     assert finding["severity"] in {"info", "warning", "error"}
     assert isinstance(finding["line"], int)
 
@@ -101,7 +101,9 @@ def test_all_implemented_rules_severity_present(tmp_path):
     skill.mkdir()
     (skill / "SKILL.md").write_text("# x\n", encoding="utf-8")
     report = build_report(run_check(str(skill)))
-    assert set(report["summary"]["by_rule"].keys()) == {"E1", "E2", "E3", "E5", "E6", "E7"}
+    assert set(report["summary"]["by_rule"].keys()) == {
+        "E1", "E2", "E3", "E4", "E5", "E6", "E7",
+    }
 
 
 def test_cli_json_mode_emits_only_json(tmp_path):
