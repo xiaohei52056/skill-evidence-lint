@@ -1,0 +1,8 @@
+sample_id,repository,path,pinned_sha,license,license_location,license_verified,redacted,admitted,reason
+R01,anthropics/skills,skills/brand-guidelines/SKILL.md,unable-to-pin (API rate-limited),see-per-skill-LICENSE.txt,skills/brand-guidelines/LICENSE.txt,unverified,true,no,"Instruction/tutorial skill; no date/updated/as_of frontmatter; no numeric claim + local evidence pair. Structurally out-of-scope for E4."
+R02,anthropics/skills,skills/mcp-builder/SKILL.md,unable-to-pin (API rate-limited),see-per-skill-LICENSE.txt,skills/mcp-builder/LICENSE.txt,unverified,true,no,"Instructional guide; no E1 claim patterns; no evidence references with dates."
+R03,anthropics/skills,skills/skill-creator/SKILL.md,unable-to-pin (API rate-limited),none in frontmatter,root LICENSE missing (404),unverified,true,no,"Process/tutorial skill; no date baseline; no local evidence file references."
+R04,anthropics/skills,skills/docx/SKILL.md,unable-to-pin,source-available (not OSS per README),skills/docx/,unverified,true,no,"README explicitly states docx/pdf/pptx/xlsx are source-available, not open source. Redistribution unclear; excluded from licensed corpus."
+R05,anthropics/skills,skills/pdf/SKILL.md,unable-to-pin,source-available (not OSS per README),skills/pdf/,unverified,true,no,"Same as R04: source-available, not OSS; excluded."
+R06,anthropics/skills,skills/pptx/SKILL.md,unable-to-pin,source-available (not OSS per README),skills/pptx/,unverified,true,no,"Same as R04: source-available, not OSS; excluded."
+R07,anthropics/skills,skills/xlsx/SKILL.md,unable-to-pin,source-available (not OSS per README),skills/xlsx/,unverified,true,no,"Same as R04: source-available, not OSS; excluded."

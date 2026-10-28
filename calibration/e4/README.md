@@ -80,8 +80,64 @@ Contract §11.2 thresholds:
 ## Known gap
 
 The "real public Skill" corpus requirement (license-cleared samples from
-published agent skills) has not been satisfied. The current fixtures prove
-the rule behaves per contract on representative structures, but real-world
-messiness (varied YAML dialects, unexpected date field names, mixed
-frontmatter styles) is not yet exercised. Do not claim production-grade
+published agent skills) has **not** been satisfied. The current fixtures
+prove the rule behaves per contract on representative structures, but
+real-world messiness (varied YAML dialects, unexpected date field names,
+mixed frontmatter styles) is not yet exercised. Do not claim production-grade
 calibration until a real corpus is imported and labeled.
+
+## P2.6c.1 — Public corpus acquisition attempt (2026-10-29)
+
+We attempted to acquire a license-cleared public Skill corpus. Results:
+
+### Candidates inspected
+
+| Source | License | Verdict |
+|---|---|---|
+| `anthropics/skills` (the canonical public skill repo) | Frontmatter says "see LICENSE.txt"; root LICENSE returned 404; README says "many skills open source (Apache 2.0)" but `docx/pdf/pptx/xlsx` are "source-available, not open source" | **License unverified** — could not pin a commit SHA (GitHub API rate-limited for this IP); no root LICENSE; per-skill LICENSE.txt files not individually fetched within this session. |
+
+### Structural finding
+
+Spot-checked `brand-guidelines`, `mcp-builder`, `skill-creator`:
+
+- Frontmatter contains only `name` + `description` (+ sometimes a
+  `license` pointer). **No `date`/`updated`/`as_of`/`version_date` fields.**
+- Body is instructional prose ("Create an MCP server…", "Apply brand
+  colors…"), not quantitative claims ("we cut latency by 40%") paired
+  with local evidence files.
+- No `.md`/`.txt` evidence files referenced by local path with date
+  metadata.
+
+These skills are **structurally out-of-scope for E4**: even with a
+valid license, they would produce zero E1 claims and zero E4 findings.
+They are useful as "real-world negative/out-of-scope" examples but do
+not provide the positive cases the contract requires (≥5 expected
+positives detected).
+
+### Why we stopped here
+
+1. **License uncertainty**: root LICENSE 404, API rate-limited, per-skill
+   LICENSE.txt not fetched. We cannot redistribute content until the
+   license is pinned and verified.
+2. **Structural mismatch**: the dominant public skill ecosystem today
+   (2026-10) consists of instruction/tutorial skills, not evidence-backed
+   technical claims. E4 was designed for a narrower SKILL.md shape
+   (quantitative claim + local benchmark/report reference). The public
+   corpus does not yet exercise that shape at scale.
+3. **No fabrication**: we will not pad the count with 20 skills that are
+   all out-of-scope, nor copy content under an unverified license.
+
+### Recommendation for P2.6c-followup
+
+A real positive-case corpus will likely come from one of:
+
+- User's own evidence-backed SKILL.md files (the original target use
+  case), licensed under the project's own license.
+- Technical report / benchmark / research repos that publish results
+  as SKILL.md files with dated evidence subfolders (does not yet exist
+  as a recognizable ecosystem).
+- A future point at which anthropics/skills or a community repo starts
+  publishing evidence-backed skills with date frontmatter.
+
+Until then, the 24-fixture decision-matrix set remains the regression
+suite; the contract §11.2 "real public Skill" threshold is **not met**.
