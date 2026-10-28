@@ -39,3 +39,27 @@ jobs:
 
       - name: Run ruff
         run: python -m ruff check .
+
+      - name: Smoke-test installed JSON output contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          mkdir -p "$tmpdir/skill"
+          cat > "$tmpdir/skill/SKILL.md" <<'EOF'
+          # Demo
+
+          We reduce latency by 40%, see [benchmark](benchmarks/latency.md).
+          EOF
+          # --format json must emit exactly one valid JSON document on stdout,
+          # exit 0 even with advisory findings, and carry the v1 schema id.
+          skill-evidence-lint --format json "$tmpdir/skill" > "$tmpdir/report.json"
+          python -c "
+          import json, sys
+          # utf-8-sig tolerates a BOM if a runner shell layers one on output.
+          with open(sys.argv[1], encoding='utf-8-sig') as fh:
+              data = json.load(fh)
+          assert data['schema'] == 'skill-evidence-lint.report.v1', data.get('schema')
+          assert 'summary' in data and 'findings' in data and 'claims' in data
+          print('json smoke ok; findings =', data['summary']['findings'])
+          " "$tmpdir/report.json"
