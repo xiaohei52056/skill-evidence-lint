@@ -180,7 +180,17 @@ def _parse_date_token(raw: str) -> date | None:
 def _coerce_date(value: Any) -> date | None:
     """YAML values arrive as str/datetime/date/int; normalize to a date."""
     if isinstance(value, datetime):
+        # Reject fractional seconds (contract §3: no .SSS).
+        if value.microsecond != 0:
+            return None
         if value.tzinfo is not None:
+            offset = value.utcoffset()
+            if offset is None:
+                return None
+            # Contract §4: tz offset must be within ±14:00.
+            secs = offset.total_seconds()
+            if abs(secs) > 14 * 3600:
+                return None
             normalized = value.astimezone(UTC).date()
         else:
             normalized = value.date()
@@ -405,6 +415,22 @@ def check_stale(
             continue
         if resolved != root and not resolved.is_relative_to(root):
             continue
+        # If the path contains a single-segment '*' wildcard, resolve via
+        # glob. Per E7/E4 contract, '?' and '**' are treated literally and
+        # fall through to E2; we do not expand them here.
+        candidates: list[Path] = []
+        if "*" in raw and "?" not in raw:
+            try:
+                for m in sorted(root.glob(raw)):
+                    if not m.is_relative_to(root):
+                        continue
+                    if m.is_file():
+                        candidates.append(m)
+            except (OSError, ValueError):
+                candidates = []
+            if len(candidates) != 1:
+                continue  # 0 or >1: E2/E7 own it
+            resolved = candidates[0].resolve()
         if not resolved.is_file():
             continue
         if resolved.suffix.lower() not in SUPPORTED_EXTENSIONS:
