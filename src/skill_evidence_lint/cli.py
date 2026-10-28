@@ -33,7 +33,7 @@ def _print_report(result: RunResult) -> None:
 
     if not result.findings:
         typer.echo(
-            "No issues found by currently implemented rules (C1/E1/E2/E3/E5/E6)."
+            "No issues found by currently implemented rules (C1/E1/E2/E3/E5/E6/E7)."
         )
     else:
         for f in result.findings:
@@ -44,8 +44,10 @@ def _print_report(result: RunResult) -> None:
     e3 = result.count_for(RuleID.E3)
     e5 = result.count_for(RuleID.E5)
     e6 = result.count_for(RuleID.E6)
+    e7 = result.count_for(RuleID.E7)
     typer.echo(
-        f"Summary: E1={e1} E2={e2} E3={e3} E5={e5} E6={e6}. Findings are reports, not failures."
+        f"Summary: E1={e1} E2={e2} E3={e3} E5={e5} E6={e6} E7={e7}. "
+        "Findings are reports, not failures."
     )
 
 

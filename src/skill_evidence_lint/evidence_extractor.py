@@ -42,9 +42,10 @@ _URL = re.compile(r"https?://[^\s)<>]+", re.IGNORECASE)
 _PATH_EXT = (
     r"(?:md|markdown|json|ya?ml|txt|csv|tsv|log|pdf|png|jpe?g|svg|py|sh|toml|ini)"
 )
+_SEGMENT = r"[A-Za-z0-9._~*-]+"
 _LOCAL_PATH = re.compile(
     r"(?<![\w/.)])"
-    r"(?:\.{1,2}/)?[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*"
+    r"(?:\.{1,2}/)?" + _SEGMENT + r"(?:/" + _SEGMENT + r")*"
     r"(?:\." + _PATH_EXT + r")"
     r"(?![\w])",
     re.IGNORECASE,

@@ -20,6 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .ambiguity_check import check_ambiguity
 from .claim_extractor import extract_candidate_claims
 from .evidence_association import associate_evidence
 from .evidence_extractor import extract_evidence_references
@@ -108,6 +109,7 @@ def run_check(skill_path: str) -> RunResult:
     )
     e5_findings = check_sections(parsed.sections)
     e6_findings = check_urls(references)
+    e7_findings = check_ambiguity(references, skill_dir)
 
     findings = (
         list(association.findings)
@@ -115,6 +117,7 @@ def run_check(skill_path: str) -> RunResult:
         + list(e3_findings)
         + list(e5_findings)
         + list(e6_findings)
+        + list(e7_findings)
     )
     # Deterministic order: line, rule id, then message for stability.
     findings.sort(key=lambda f: (f.line, str(f.rule_id), f.message))
