@@ -26,7 +26,47 @@ release.
 - **E4** `evidence-stale` (info, offline): compares declared date
   metadata on referenced evidence files against the Skill's frontmatter
   baseline date. See `docs/e4-contract.md` for the frozen v1.0 contract.
+  E4 is **claim-scoped**: it only evaluates `(claim, evidence_ref)` pairs
+  where E1 recognizes an effect claim and the reference shares the same
+  Markdown context. E2 and E4 are mutually exclusive per pair (E2 owns
+  missing/escaped paths; E4 only runs on files that exist inside the Skill
+  root).
 - **JSON report output**: `skill-evidence-lint --format json <path>`.
+
+### E4 compatibility notes (implemented; contract v1.1 proposal)
+
+Two backward-compatible improvements were added during calibration:
+
+1. **Skill baseline field `last_updated`** is now recognized. The skill-
+   side priority is `date → updated → last_updated → last_modified →
+   version_date`. Only top-level frontmatter fields are read; nested
+   `metadata.*` is not flattened.
+2. **Backtick-wrapped strict relative paths** (e.g. `` `examples/foo.md` ``)
+   are now emitted as a `LOCAL_PATH` reference in addition to being
+   emitted as `COMMAND`. Commands with spaces, shell flags, or
+   unsupported extensions remain `COMMAND` only. Path existence, root
+   containment, symlink, size, and encoding checks are unchanged.
+
+These are documented in `docs/e4-contract-v1.1-proposal.md`. They are
+**proposed v1.1 changes**, not yet ratified; the frozen v1.0 contract in
+`docs/e4-contract.md` is unchanged. All existing strict date parsing,
+placeholder rejection, E2/E4 mutual exclusion, and finding schema
+behavior is unchanged.
+
+### Calibration status disclosure
+
+- **Synthetic fixtures:** 24 hand-authored samples (8 expected-e4,
+  5 expected-no-e4, 11 out-of-scope). 8/8 positives detected, 0 false
+  positives, 0 false negatives. These prove E4 logic on its designed
+  decision branches.
+- **Real public corpus:** 29 SKILL.md files across 13+ independent
+  sources were inspected. None contained an E1-recognized effect claim
+  paired with a dated local evidence file. E4 produced 0 findings (and
+  0 false positives) on all of them.
+- **Real expected-e4: 0.** Formal real TP/FP/FN is n/a. E4's positive
+  path has not been exercised on a real evidence-backed Skill; this is
+  an ecosystem gap (public skills are procedural instructions, not
+  evidence reports), not a code defect.
 
 ### Changed — JSON schema (additive, no version bump)
 
