@@ -472,3 +472,56 @@ def test_a34_e2_e4_mutual_exclusion(tmp_path):
     result = run_check(str(skill))
     assert any(f.rule_id is RuleID.E2 for f in result.findings)
     assert _e4_findings(result) == []
+
+
+# --------------------------------------------------------------------------- #
+# v1.1: last_updated as a skill-side baseline date field.
+# --------------------------------------------------------------------------- #
+def test_a35_skill_last_updated_only(tmp_path):
+    skill = _skill(
+        tmp_path / "s",
+        "---\nlast_updated: 2025-03-01\n---\n\n"
+        "We reduce latency by 40%, see [r](r.md).\n",
+        {"r.md": "---\ndate: 2025-02-01\n---\n"},
+    )
+    f = _e4_findings(run_check(str(skill)))
+    assert len(f) == 1
+    assert f[0].skill_date == "2025-03-01"
+    assert f[0].evidence_date == "2025-02-01"
+
+
+def test_a36_updated_takes_precedence_over_last_updated(tmp_path):
+    skill = _skill(
+        tmp_path / "s",
+        "---\nupdated: 2025-03-01\nlast_updated: 2025-06-01\n---\n\n"
+        "We reduce latency by 40%, see [r](r.md).\n",
+        {"r.md": "---\ndate: 2025-02-01\n---\n"},
+    )
+    f = _e4_findings(run_check(str(skill)))
+    assert len(f) == 1
+    # updated wins (earlier in priority list).
+    assert f[0].skill_date == "2025-03-01"
+
+
+def test_a37_last_updated_invalid_falls_to_version_date(tmp_path):
+    skill = _skill(
+        tmp_path / "s",
+        "---\nlast_updated: 2025-02-30\nversion_date: 2025-03-01\n---\n\n"
+        "We reduce latency by 40%, see [r](r.md).\n",
+        {"r.md": "---\ndate: 2025-02-01\n---\n"},
+    )
+    f = _e4_findings(run_check(str(skill)))
+    assert len(f) == 1
+    assert f[0].skill_date == "2025-03-01"
+
+
+def test_a38_last_updated_placeholder_rejected(tmp_path):
+    skill = _skill(
+        tmp_path / "s",
+        "---\nlast_updated: YYYY-MM-DD\nversion_date: 2025-03-01\n---\n\n"
+        "We reduce latency by 40%, see [r](r.md).\n",
+        {"r.md": "---\ndate: 2025-02-01\n---\n"},
+    )
+    f = _e4_findings(run_check(str(skill)))
+    assert len(f) == 1
+    assert f[0].skill_date == "2025-03-01"

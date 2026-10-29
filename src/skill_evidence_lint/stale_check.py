@@ -49,7 +49,8 @@ _G1B_FIELDS = (
     "run_date",
 )
 # Skill-side priority fallback (first parseable wins).
-_SKILL_FIELDS = ("date", "updated", "last_modified", "version_date")
+# v1.1: added "last_updated" after "updated" to match real-world skills.
+_SKILL_FIELDS = ("date", "updated", "last_updated", "last_modified", "version_date")
 
 # Placeholder literals that must never parse as a real date.
 _PLACEHOLDERS = frozenset(
