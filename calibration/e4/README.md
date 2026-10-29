@@ -193,3 +193,51 @@ path is only exercised by the hand-authored fixtures. To meet the ≥5
 positive threshold, we need user-supplied SKILL.md files that actually
 make quantitative claims against dated evidence — i.e. the original
 target use case of this linter.
+
+## P2.6c.4 — Targeted evidence-backed skill investigation (2026-10-29)
+
+We investigated the specific candidates flagged as likely evidence-backed:
+
+| ID | Source | Date field? | Evidence files? | E4 result | Reason |
+|---|---|---|---|---|---|
+| D01 | FitTracker2 `.claude/skills/qa/SKILL.md` | `last_updated: 2026-05-15` ✅ | 3 JSON files with `updated` dates (2026-04-04, 2026-04-06, 2026-06-15) | 0 E4 findings | **0 E1 claims.** The skill states guardrail thresholds (">99.5% crash-free", "<2s cold start", "1.3-2.7x event/test ratio") but never says "we reduced X by N%". E4 associates findings via E1 claims; without claims there is nothing to anchor an evidence reference to. |
+| D02 | FitTracker2 `.claude/skills/design/SKILL.md` | `last_updated: 2026-05-15` ✅ | design docs | 0 E4 findings | No E1 claim patterns. |
+| D03 | RConsortium/pharma-skills `_automation/benchmark-runner/SKILL.md` | none | benchmark outputs | 0 E4 findings | No baseline date field in frontmatter. |
+| D04 | snapsynapse/skill-a11y-audit `a11y-audit/SKILL.md` | none | evals/, MANIFEST.yaml | 0 E4 findings | Dates exist in project metadata but not in SKILL.md frontmatter; contract does not accept MANIFEST dates as skill baseline. |
+
+### Root cause finding
+
+The E4 positive path depends on E1's claim detector, which looks for
+"by N%" / "N% faster" / "2x" improvement claims. **No real public
+SKILL.md file inspected (26 files across 10 repos) contains this
+pattern.** Real skills are procedural instructions ("do X, then Y") or
+state target thresholds ("must be >99%"), not evidence reports that
+claim an improvement and cite a dated benchmark file.
+
+This means E4's positive path is, by design, targeted at a SKILL.md
+shape that does not yet exist in the public ecosystem. The fixtures
+(P01–P08) remain the only positive-path coverage.
+
+### Calibration counts (cumulative through P2.6c.4)
+
+| Bucket | Count |
+|---|---|
+| Real public SKILL.md files fetched and run | 26 |
+| With a valid skill baseline date | 3 (D01, D02, A01–A05, A12) |
+| With E1 claims present | 0 |
+| expected-e4 | 0 |
+| expected-no-e4 | 0 |
+| out-of-scope | 26 |
+| ambiguous | 0 |
+| FP | 0 |
+| TP | n/a |
+| FN | n/a |
+
+### Verdict
+
+**CALIBRATION INCOMPLETE.** 0 false positives across 26 real files
+(strong negative-corpus result), but 0 positive cases found in the wild.
+The ≥5 expected-positive threshold cannot be met from public sources
+until evidence-backed SKILL.md files exist. Next step: user-supplied
+skills that follow the "claim + dated local evidence" shape this linter
+was built for.
