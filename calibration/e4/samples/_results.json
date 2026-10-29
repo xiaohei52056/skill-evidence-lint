@@ -1,0 +1,187 @@
+[
+  {
+    "sid": "P01",
+    "kind": "positive",
+    "reason": "G1b date on evidence older than skill date",
+    "e4_count": 1,
+    "e4_days": [
+      503
+    ]
+  },
+  {
+    "sid": "P02",
+    "kind": "positive",
+    "reason": "G1a as_of wins; evidence older",
+    "e4_count": 1,
+    "e4_days": [
+      212
+    ]
+  },
+  {
+    "sid": "P03",
+    "kind": "positive",
+    "reason": "G2 filename date, older",
+    "e4_count": 1,
+    "e4_days": [
+      264
+    ]
+  },
+  {
+    "sid": "P04",
+    "kind": "positive",
+    "reason": "G3 labeled content date, older",
+    "e4_count": 1,
+    "e4_days": [
+      436
+    ]
+  },
+  {
+    "sid": "P05",
+    "kind": "positive",
+    "reason": "Skill date uses updated: (date field invalid, fallback)",
+    "e4_count": 1,
+    "e4_days": [
+      182
+    ]
+  },
+  {
+    "sid": "P06",
+    "kind": "positive",
+    "reason": "Two stale evidence files for one claim, both fire",
+    "e4_count": 2,
+    "e4_days": [
+      517,
+      273
+    ]
+  },
+  {
+    "sid": "P07",
+    "kind": "positive",
+    "reason": "ISO datetime with Z tz, normalizes to UTC calendar day",
+    "e4_count": 1,
+    "e4_days": [
+      351
+    ]
+  },
+  {
+    "sid": "P08",
+    "kind": "positive",
+    "reason": "Single-match wildcard reference uses resolved file",
+    "e4_count": 1,
+    "e4_days": [
+      304
+    ]
+  },
+  {
+    "sid": "N01",
+    "kind": "negative",
+    "reason": "Evidence date equals skill date",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "N02",
+    "kind": "negative",
+    "reason": "Evidence date newer than skill date",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "N03",
+    "kind": "negative",
+    "reason": "G1b group ambiguity (two different dates) -> silent, no finding",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "N04",
+    "kind": "negative",
+    "reason": "Placeholder date (YYYY-MM-DD) -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "N05",
+    "kind": "negative",
+    "reason": "Evidence file has no date anywhere -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O01",
+    "kind": "out-of-scope",
+    "reason": "Missing local path -> E2 owns it; E4 silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O02",
+    "kind": "out-of-scope",
+    "reason": "URL reference -> E4 silent (E1/E6 may fire)",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O03",
+    "kind": "out-of-scope",
+    "reason": "Wildcard multi-match -> E7 owns ambiguity; E4 silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O04",
+    "kind": "out-of-scope",
+    "reason": "Non-text extension (.png) -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O05",
+    "kind": "out-of-scope",
+    "reason": "No skill frontmatter date -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O06",
+    "kind": "out-of-scope",
+    "reason": "Pre-2000 evidence date -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O07",
+    "kind": "out-of-scope",
+    "reason": "Fractional seconds -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O08",
+    "kind": "out-of-scope",
+    "reason": "Out-of-range tz (+15:00) -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O09",
+    "kind": "out-of-scope",
+    "reason": "Calendar-impossible date (2025-02-30) -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O10",
+    "kind": "out-of-scope",
+    "reason": "Evidence file over 1 MiB -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  },
+  {
+    "sid": "O11",
+    "kind": "out-of-scope",
+    "reason": "Non-UTF-8 content -> silent",
+    "e4_count": 0,
+    "e4_days": []
+  }
+]

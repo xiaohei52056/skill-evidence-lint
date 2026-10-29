@@ -66,13 +66,20 @@ A practical workflow may use more than one layer:
 
 ## What it checks
 
-The current v0.1.0 pipeline has one candidate-claim detection stage and two finding rules.
+The current pipeline has one candidate-claim detection stage and three finding rules (E1, E2, E3).
 
 | Rule | Purpose | Example |
 |---|---|---|
 | **C1 — Candidate effect claims** | Detects a conservative set of English quantitative or zero-related effect claims. C1 is the claim-detection stage, not a verdict that a claim is true. | `Reduces processing time by 40%.` |
 | **E1 — Missing in-context reference** | Reports a detected claim when no recognized URL or local path appears in the same paragraph or enclosing list item. A backtick command example does not clear E1. | A claim in one paragraph and a link only in the next paragraph. |
 | **E2 — Local-path problem** | Reports detected local paths that do not exist, resolve outside the Skill root, or cannot be resolved safely. | A missing `references/benchmark.md` or a symlink that points outside the Skill directory. |
+| **E3 — Missing reproducibility cue** | Reports a numeric claim when neither its own paragraph/list item nor a directly adjacent fenced command block contains any of: an allowlisted command with a positional argument (`python benchmark.py`, `npm test`, `cargo bench`, …), an input/dataset/config phrase (`on dataset X`, `using configuration Y`), or a metric-definition phrase (`measured as …`, `pass rate`, `accuracy on …`). Environment-only commands such as `python --version` do not count. | A bare "cuts latency by 40%" with no command, dataset, or metric phrase nearby. |
+| **E5 — Empty evidence section** | Reports `## Evidence`, `## Benchmark`, `## Results`, or `## Evaluation` headings whose body is empty or contains only a placeholder (`TODO`, `TBD`, `N/A`, `coming soon`, `add evidence here`). | A `## Evidence` section with no body, or one that just says `TODO`. |
+| **E6 — URL format/placeholder (offline)** | Info-level check on extracted `http(s)://` URLs. Flags URLs with no host (e.g. `http:///path`), reserved example domains (`example.com/org/net/edu`), or obvious template tokens (`your-domain`, `replace_me`, `{{...}}`). **Never makes a network request**; reachability is not tested. | `https://example.com/benchmark` is flagged as a reserved example domain, not as unreachable. |
+| **E7 — Ambiguous wildcard path (offline)** | Info-level check for local path references containing `*` within a single segment (e.g. `benchmarks/*.md`). Resolves the pattern against the Skill root with stdlib `Path.glob` and flags when **more than one safe, in-root file** matches. The contract treats `?` and `**` as literal characters (no glob expansion); such patterns are not expanded by E7 and fall through to E2. Traversal and symlink escapes are filtered; single matches and zero matches are silent (E2 covers the zero case). | `benchmarks/*.md` matching three files. |
+| **E4 — evidence-stale (info)** | Compares the declared date metadata on a referenced evidence file against the declared date on SKILL.md frontmatter. Emits one info finding when the evidence's normalized UTC calendar date is strictly earlier than the skill's. Uses a source-group model (`as_of`/`data_date` → `date`/`updated`/… → filename date → labeled content date) with group-die-on-ambiguity; skill side takes the first parseable of `date`/`updated`/`last_modified`/`version_date`. Reads at most 1 MiB of UTF-8 text, root-confined, no clock, no git, no network. | `bench.md` declares `2024-06-15` while SKILL.md declares `date: 2025-03-01` → info finding. |
+
+E3's "verifiable" label means only that a recognizable textual cue was found — it does not mean a benchmark ran, that the evidence is authentic, or that the result is actually reproducible.
 
 ### Which claims can C1 detect?
 
@@ -221,16 +228,23 @@ Implemented in v0.1.0:
 - C1 candidate effect-claim extraction
 - E1 in-context evidence-reference association
 - E2 local-path existence and root-confinement checks
+- E3 reproducibility-cue coverage (command / input-dataset / metric-definition cues, with adjacent fenced-block support)
+- E5 empty / placeholder-only evidence section detection
+- E6 offline URL format/placeholder check (no network)
+- E7 offline wildcard path ambiguity check (no subprocess, root-confined)
+- E4 evidence-stale date-metadata comparison (offline, deterministic, info)
+- Stable versioned JSON output: `skill-evidence-lint --format json <path>` (schema `skill-evidence-lint.report.v1`)
 - CLI checks for a Skill directory or a direct `SKILL.md` path
 
-Not implemented in v0.1.0:
+Not implemented:
 
-- E3–E7 or broader semantic claim analysis
+- (none — all eight MVP rules C1/E1/E2/E3/E4/E5/E6/E7 are implemented)
 - Automatic fixes
 - LLM-based truthfulness or evidence-sufficiency judgments
-- URL reachability checks
+- URL reachability checks (E6 only checks syntax/placeholders, never fetches)
 - JSON output or multi-file batch checking
 - A published first-party GitHub Action or native PR annotations
+- Fenced code-block cues are not yet associated with claims; E3 v0.1 scans inline code and prose only
 
 ## Development
 

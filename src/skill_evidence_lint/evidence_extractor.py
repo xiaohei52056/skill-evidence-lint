@@ -42,9 +42,10 @@ _URL = re.compile(r"https?://[^\s)<>]+", re.IGNORECASE)
 _PATH_EXT = (
     r"(?:md|markdown|json|ya?ml|txt|csv|tsv|log|pdf|png|jpe?g|svg|py|sh|toml|ini)"
 )
+_SEGMENT = r"[A-Za-z0-9._~*-]+"
 _LOCAL_PATH = re.compile(
     r"(?<![\w/.)])"
-    r"(?:\.{1,2}/)?[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*"
+    r"(?:\.{1,2}/)?" + _SEGMENT + r"(?:/" + _SEGMENT + r")*"
     r"(?:\." + _PATH_EXT + r")"
     r"(?![\w])",
     re.IGNORECASE,
@@ -109,6 +110,27 @@ def extract_evidence_references(
                     line=_match_line(ctx, start),
                 )
             )
+
+            # v1.1: if the backtick content is a strict relative path with a
+            # supported extension, also emit it as a LOCAL_PATH (additive;
+            # COMMAND is preserved). This lets ``examples/foo.md`` in backticks
+            # associate with a claim while still treating ``python run.py`` as
+            # a command. Path safety (existence, containment, symlink) is
+            # still enforced downstream by E2/E4.
+            if _LOCAL_PATH.fullmatch(cmd_text):
+                path_key = (RefType.LOCAL_PATH, cmd_text)
+                if path_key not in seen_in_ctx:
+                    seen_in_ctx.add(path_key)
+                    counter += 1
+                    references.append(
+                        EvidenceReference(
+                            raw_path=cmd_text,
+                            context=ctx,
+                            reference_id=f"r-{counter}",
+                            ref_type=RefType.LOCAL_PATH,
+                            line=_match_line(ctx, start),
+                        )
+                    )
 
         # 2) URLs in the masked text.
         for m in _URL.finditer(masked):

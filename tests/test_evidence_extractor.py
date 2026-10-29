@@ -104,3 +104,44 @@ def test_duplicate_in_same_context_recorded_once():
 def test_empty_input_returns_empty_list():
     assert extract_evidence_references([]) == []
     assert extract("") == []
+
+
+# --------------------------------------------------------------------------- #
+# v1.1: backtick-wrapped paths that look like strict relative files are
+# also emitted as LOCAL_PATH (additive; COMMAND is preserved).
+# --------------------------------------------------------------------------- #
+def test_backtick_strict_path_emitted_as_both_command_and_local_path():
+    refs = extract("Run `examples/foo.md` for the report.")
+    types = {(r.ref_type, r.raw_path) for r in refs}
+    assert (RefType.COMMAND, "examples/foo.md") in types
+    assert (RefType.LOCAL_PATH, "examples/foo.md") in types
+
+
+def test_backtick_command_not_treated_as_path():
+    refs = extract("Run `python scripts/run.py` to build.")
+    types = {(r.ref_type, r.raw_path) for r in refs}
+    # COMMAND preserved; no LOCAL_PATH for the whole command string.
+    assert (RefType.COMMAND, "python scripts/run.py") in types
+    assert (RefType.LOCAL_PATH, "python scripts/run.py") not in types
+
+
+def test_backtick_bare_filename_with_extension_is_path():
+    refs = extract("See `README.md` for details.")
+    types = {(r.ref_type, r.raw_path) for r in refs}
+    assert (RefType.LOCAL_PATH, "README.md") in types
+    assert (RefType.COMMAND, "README.md") in types
+
+
+def test_backtick_unsupported_extension_stays_command_only():
+    refs = extract("Run `deploy.exe` to ship.")
+    types = {(r.ref_type, r.raw_path) for r in refs}
+    assert (RefType.COMMAND, "deploy.exe") in types
+    # .exe is not in the supported path extension set for this pass.
+    assert (RefType.LOCAL_PATH, "deploy.exe") not in types
+
+
+def test_backtick_path_with_space_not_treated_as_path():
+    refs = extract("Run `cat my file.md` please.")
+    types = {(r.ref_type, r.raw_path) for r in refs}
+    assert (RefType.COMMAND, "cat my file.md") in types
+    assert (RefType.LOCAL_PATH, "cat my file.md") not in types

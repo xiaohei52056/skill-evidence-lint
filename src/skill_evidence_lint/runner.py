@@ -20,12 +20,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .ambiguity_check import check_ambiguity
 from .claim_extractor import extract_candidate_claims
 from .evidence_association import associate_evidence
 from .evidence_extractor import extract_evidence_references
-from .models import Finding, RuleID
+from .evidence_section import check_sections
+from .models import CandidateClaim, EvidenceReference, Finding, RuleID
 from .parser import parse_text
 from .path_checker import check_local_paths
+from .repro_cue import check_repro_cues
+from .stale_check import check_stale, extract_frontmatter_text, parse_frontmatter
+from .url_check import check_urls
 
 
 class InputError(Exception):
@@ -40,6 +45,8 @@ class RunResult:
     claim_count: int
     reference_count: int
     findings: tuple[Finding, ...]
+    claims: tuple[CandidateClaim, ...] = ()
+    references: tuple[EvidenceReference, ...] = ()
 
     def count_for(self, rule_id: RuleID) -> int:
         return sum(1 for f in self.findings if f.rule_id is rule_id)
@@ -98,14 +105,48 @@ def run_check(skill_path: str) -> RunResult:
 
     association = associate_evidence(claims, references)
     e2_findings = check_local_paths(references, skill_dir)
+    e3_findings = check_repro_cues(
+        claims,
+        contexts=parsed.contexts,
+        fences=parsed.fences,
+    )
+    e5_findings = check_sections(parsed.sections)
+    e6_findings = check_urls(references)
+    e7_findings = check_ambiguity(references, skill_dir)
 
-    findings = list(association.findings) + list(e2_findings)
+    skill_fm = parse_frontmatter(extract_frontmatter_text(text))
+    e4_findings = check_stale(
+        claims=claims,
+        references=references,
+        associated_pairs=association.associated,
+        skill_dir=skill_dir,
+        skill_frontmatter=skill_fm,
+    )
+
+    findings = (
+        list(association.findings)
+        + list(e2_findings)
+        + list(e3_findings)
+        + list(e4_findings)
+        + list(e5_findings)
+        + list(e6_findings)
+        + list(e7_findings)
+    )
     # Deterministic order: line, rule id, then message for stability.
-    findings.sort(key=lambda f: (f.line, str(f.rule_id), f.message))
+    # E4 findings at the same line/rule are additionally ordered by
+    # days_diff descending (most stale first) per contract §7.4.
+    def _sort_key(f: Finding):
+        days = getattr(f, "days_diff", None)
+        days_for_sort = -days if isinstance(days, int) else 0
+        return (f.line, str(f.rule_id), days_for_sort, f.message)
+
+    findings.sort(key=_sort_key)
 
     return RunResult(
         skill_md_path=str(skill_md),
         claim_count=len(claims),
         reference_count=len(references),
         findings=tuple(findings),
+        claims=tuple(claims),
+        references=tuple(references),
     )
